@@ -1,6 +1,7 @@
 // Add URL of data to query
 //var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_month.geojson"
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_week.geojson";
+//var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
 
 // Perform a get request on the url
 d3.json(queryUrl, function(data) {
@@ -10,7 +11,7 @@ d3.json(queryUrl, function(data) {
 
 // Assigns colour to the markers
 function colorMarker(depth) {
-    if (depth <= 10) { return "green" } else if (depth <= 30) { return "yellow-green" } else if (depth <= 50) { return "yellow" } else if (depth <= 70) { return "orange" } else if (depth <= 90) { return "red-orange" } else { return "red" };
+    if (depth <= 10) { return "green" } else if (depth <= 30) { return "#a3f600" } else if (depth <= 50) { return "yellow" } else if (depth <= 70) { return "orange" } else if (depth <= 90) { return "#ff5500" } else { return "red" };
 };
 
 //==============================================================================
@@ -25,16 +26,17 @@ function creatFeatures(earthquakeData) {
         var rad = feature.properties.mag * 2.5
             // Circular marker properties 
         return {
-            opacity: 0.8,
-            color: col,
+            opacity: 0.2,
+            color: "black",
             fillColor: col,
-            radius: rad
+            radius: rad,
+            fillOpacity: 0.7
         };
     };
 
     // Creates Tooltips
     function onEachFeature(feature, layer) {
-        layer.bindPopup("<p><b>" + feature.properties.place + "</b><hr>" +
+        layer.bindPopup("<h3>" + feature.properties.place + "</h3><hr><p>" +
             new Date(feature.properties.time) +
             "<br>Magnitude: " + feature.properties.mag + "</p>");
     };
@@ -59,13 +61,13 @@ function creatFeatures(earthquakeData) {
 // Creates map, map views, 
 function createMap(earthquakes) {
 
-    // map views
+    // Create map views
     var satellite_map = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
         attribution: "© <a href='https://www.mapbox.com/about/maps/'>Mapbox</a> © <a href='http://www.openstreetmap.org/copyright'>OpenStreetMap</a> <strong><a href='https://www.mapbox.com/map-feedback/' target='_blank'>Improve this map</a></strong>",
         tileSize: 512,
         maxZoom: 18,
         zoomOffset: -1,
-        id: "mapbox/dark-v10",
+        id: "mapbox/satellite-v9",
         accessToken: API_KEY
     });
     var greyscale_map = L.tileLayer("https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}", {
@@ -81,18 +83,18 @@ function createMap(earthquakes) {
         tileSize: 512,
         maxZoom: 18,
         zoomOffset: -1,
-        id: "mapbox/streets-v11",
+        id: "mapbox/outdoors-v11",
         accessToken: API_KEY
     });
 
-    // adds map views to layer 
+    // Define base maps 
     var base_maps = {
         "Satellite": satellite_map,
         "Greyscale": greyscale_map,
         "Outdoors": outdoor_map
     };
 
-    // 
+    // define overlap maps
     var overlay_maps = {
         Earthquakes: earthquakes
     };
@@ -106,7 +108,7 @@ function createMap(earthquakes) {
     var myMap = L.map("plot-area", {
         center: [5.3, 141.2],
         zoom: 4,
-        layers: [satellite_map, earthquakes]
+        layers: [outdoor_map, earthquakes]
     });
 
     // Controls 
@@ -114,5 +116,22 @@ function createMap(earthquakes) {
         collapsed: false
     }).addTo(myMap);
 
+    // Create and add legend
+    var legend = L.control({ position: 'bottomright' });
 
+    legend.onAdd = function(myMap) {
+        var div = L.DomUtil.create('div', 'info legend'),
+            grades = [0, 10, 30, 50, 70, 90]
+        div.innerHTML = "<h3>Earthquake Depth</h3>"
+
+        // Generate a label with a colored square for each interval
+        for (var i = 0; i < grades.length; i++) {
+            div.innerHTML +=
+                '<i style="background:' + colorMarker(grades[i] + 1) + '"></i> ' +
+                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        }
+        return div;
+    };
+
+    legend.addTo(myMap);
 };
