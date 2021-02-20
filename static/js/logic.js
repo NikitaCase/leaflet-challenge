@@ -6,7 +6,7 @@ var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_we
 // Perform a get request on the url
 d3.json(queryUrl, function(data) {
     // Pass the data from the request to first function 
-    creatFeatures(data);
+    createFeatures(data);
 });
 
 // Assigns colour to the markers
@@ -16,7 +16,7 @@ function colorMarker(depth) {
 
 //==============================================================================
 // Creates earthquake layer, markers and tooltips 
-function creatFeatures(earthquakeData) {
+function createFeatures(earthquakeData) {
 
     // Defines marker style
     function circleStyle(feature) {
